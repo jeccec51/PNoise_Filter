@@ -7,6 +7,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/core/core.hpp"
+#include "Constants.h"
 #include <any> 
 
 class BandReject_Noise_Filter
@@ -16,9 +17,19 @@ public:
 	BandReject_Noise_Filter();
 	~BandReject_Noise_Filter();
 	bool LoadImageData(void* pImageData, const int& nHeight, const int& nWidth);
+	bool Filter_Periodic_Noise();
 private:
+	void Compute2DSpectrum();
+	void ComputePSD(const cv::Mat& matInputImg, cv::Mat& matPSDImage, cv::Mat& matMagSpectrum,
+		cv::Mat& matLogPSD, cv::Mat& matLogMagSpectrum, int logFlag);
+	cv::Mat FFtShift(const cv::Mat& matInputSpectrum);
+	int m_nInterations;
 	bool m_bFileLoadError;
 	cv::Mat m_InImage;
 	cv::Mat m_GrayImage;
+	cv::Mat m_matMAgnitudeSpectrum;
+	cv::Mat m_matPSD;
+	cv::Mat m_matLogMAgnitudeSpectrum;
+	cv::Mat m_matLogPSD;
 };
 #endif
