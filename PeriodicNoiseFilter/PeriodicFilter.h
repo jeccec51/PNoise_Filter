@@ -19,10 +19,16 @@ public:
 	bool LoadImageData(void* pImageData, const int& nHeight, const int& nWidth);
 	bool Filter_Periodic_Noise();
 private:
+	inline bool PeakDetect(const double& d1, const double& d2, const double& d3) 
+	{return ((d2 > d1) && (d2 > d3));}
+	void ApplyLPF(const cv::Mat& matLPF, cv::Mat& matSpectrum);
+	int FindLowPassCutoff(cv::Mat& matMagSpectrum, cv::Mat& matLPF);
+	void LowPassFilter();
 	void Compute2DSpectrum();
 	void ComputePSD(const cv::Mat& matInputImg, cv::Mat& matPSDImage, cv::Mat& matMagSpectrum,
 		cv::Mat& matLogPSD, cv::Mat& matLogMagSpectrum, int logFlag);
 	cv::Mat FFtShift(const cv::Mat& matInputSpectrum);
+	double CalculateAverage(cv::Mat& matImage);
 	int m_nInterations;
 	bool m_bFileLoadError;
 	cv::Mat m_InImage;

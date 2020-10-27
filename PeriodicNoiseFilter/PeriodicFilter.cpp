@@ -58,12 +58,70 @@ bool BandReject_Noise_Filter::LoadImageData(void* pImageData, const int& nHeight
 bool BandReject_Noise_Filter::Filter_Periodic_Noise()
 {
 	bool bFilterError = false;
-	for (m_nInterations = 0; m_nInterations < InterationParms::kMaxIterations; m_nInterations++)
-	{
-		Compute2DSpectrum();
-	}
+	//Updates the member variables corresponding to Spectrum
+	Compute2DSpectrum();
+	//Filter out the low frequency components, to preserve the non periodic data
+	LowPassFilter();
 	return bFilterError;
 }
+
+void BandReject_Noise_Filter::ApplyLPF(const cv::Mat& matLPF, cv::Mat& matSpectrum)
+{
+	cv::Mat matTmpMask;
+	int nTypeImg = matSpectrum.type();
+	matSpectrum.convertTo(matSpectrum, CV_8UC1);
+	matLPF.convertTo(matLPF, CV_8UC1);
+	cv::bitwise_and(matSpectrum, matLPF, matSpectrum);
+	matSpectrum.convertTo(matSpectrum, nTypeImg);
+}
+
+
+int BandReject_Noise_Filter::FindLowPassCutoff(cv::Mat& matMagSpectrum, cv::Mat& matLPF)
+{
+	cv::Mat matLPFMask = Mat::zeros(matMagSpectrum.size(), CV_8UC1);
+	int nX = matMagSpectrum.cols / 2;
+	int nY = matMagSpectrum.rows / 2;
+	int nMinimumDimention = min(matMagSpectrum.rows, matMagSpectrum.cols);
+	cv::Point ptCenter(nX, nY);
+	cv::Mat matSpectrum1 = matMagSpectrum;
+	matSpectrum1.convertTo(matMagSpectrum, CV_8UC1);
+	std::vector<double> LPFCutoffList;
+	int nLPFRad = 0, nIdx = 0;
+	for (nLPFRad = 2; nLPFRad <= nMinimumDimention / 2; nLPFRad++)
+	{
+		nIdx++;
+		cv::circle(matLPFMask, ptCenter, nLPFRad, Scalar::all(255), -1);
+		cv::bitwise_and(matSpectrum1, matLPFMask, matSpectrum1);
+		LPFCutoffList.push_back(CalculateAverage(matSpectrum1));
+		ApplyLPF(matLPFMask, matSpectrum1);
+		if ((nIdx >=3) && (PeakDetect(LPFCutoffList[nIdx - 3], LPFCutoffList[nIdx - 2], LPFCutoffList[nIdx - 1])))
+		{
+			break;
+		}
+	}
+	circle(matLPF, ptCenter, nLPFRad, Scalar::all(255), -1);
+	return nLPFRad;
+}
+
+
+
+void BandReject_Noise_Filter::LowPassFilter()
+{
+	//First we Apply an LPF to filter out the High Frequency Components
+	cv::Mat matLowFrequencyMask = cv::Mat::zeros(m_matPSD.size(), CV_64F);
+	cv::Mat matThrPSD, matThrMag, MatMag, MatPSD;
+	bool bUsePSDCirCle = false;
+	m_matMAgnitudeSpectrum.convertTo(MatMag, CV_8UC1);
+	//Un-Normalize the spectrum
+	MatMag = MatMag * Parms::kHighestIntensityLevel;
+	//Do an initial OTSU thresholding on the spectrum to clusted High and Low frequency components
+	cv::threshold(MatMag, matThrMag, Parms::kLowestIntensityLevel, Parms::kHighestIntensityLevel, 
+		THRESH_BINARY | THRESH_OTSU);
+	//Compute LPF Cut off frequency
+	int nRadius = FindLowPassCutoff(MatMag, matLowFrequencyMask);
+}
+
+
 
 void BandReject_Noise_Filter::Compute2DSpectrum()
 {
@@ -123,4 +181,12 @@ cv::Mat BandReject_Noise_Filter::FFtShift(const cv::Mat& matInputSpectrum)
 	matQuadrant2.copyTo(matQuadrant1);
 	matTmp.copyTo(matQuadrant2);
 	return matOutputSpectrum;
+}
+
+double BandReject_Noise_Filter::CalculateAverage(cv::Mat& matImage)
+{
+	int nNZ = cv::countNonZero(matImage);
+	double dPixelsum = cv::sum(matImage)[0];
+	double dAverage = (nNZ > 0) ? dPixelsum / static_cast<double>(nNZ) : 0;
+	return dAverage;
 }
