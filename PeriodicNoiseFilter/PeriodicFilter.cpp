@@ -30,6 +30,7 @@ BandReject_Noise_Filter::BandReject_Noise_Filter(const std::string& imPath)
 BandReject_Noise_Filter::BandReject_Noise_Filter()
 {
 	m_bFileLoadError = true;
+	m_nInterations = 0;
 }
 
 
@@ -62,8 +63,28 @@ bool BandReject_Noise_Filter::Filter_Periodic_Noise()
 	Compute2DSpectrum();
 	//Filter out the low frequency components, to preserve the non periodic data
 	LowPassFilter();
+	ApplyFilter();
 	return bFilterError;
 }
+
+void BandReject_Noise_Filter::ApplyFilter()
+{
+	m_matLPF = FFtShift(m_matLPF);
+	Mat planes[2] = { Mat_<float>(m_GrayImage.clone()), Mat::zeros(m_GrayImage.size(), CV_64F) };
+	Mat complexI;
+	merge(planes, 2, complexI);
+	dft(complexI, complexI, DFT_SCALE);
+	Mat planesH[2] = { Mat_<double>(m_matLPF.clone()),
+		Mat::zeros(m_matLPF.size(), CV_64F) };
+	Mat complexH;
+	merge(planesH, 2, complexH);
+	Mat complexIH;
+	mulSpectrums(complexI, complexH, complexIH, 0);
+	idft(complexIH, complexIH);
+	split(complexIH, planes);
+	m_matOutput = planes[0];
+}
+
 
 void BandReject_Noise_Filter::ApplyLPF(const cv::Mat& matLPF, cv::Mat& matSpectrum)
 {
@@ -119,6 +140,7 @@ void BandReject_Noise_Filter::LowPassFilter()
 		THRESH_BINARY | THRESH_OTSU);
 	//Compute LPF Cut off frequency
 	int nRadius = FindLowPassCutoff(MatMag, matLowFrequencyMask);
+	m_matLPF = matLowFrequencyMask;
 }
 
 
@@ -135,9 +157,7 @@ void BandReject_Noise_Filter::Compute2DSpectrum()
 	m_matLogMAgnitudeSpectrum = FFtShift(m_matLogMAgnitudeSpectrum);
 	cv::normalize(m_matPSD, m_matPSD, 0, 255, NORM_MINMAX);
 	cv::normalize(m_matMAgnitudeSpectrum, m_matMAgnitudeSpectrum, 0, 255, NORM_MINMAX);
-	cv::normalize(m_matLogPSD, m_matLogPSD, 0, 1, NORM_MINMAX);
-	cv::normalize(m_matLogMAgnitudeSpectrum, m_matLogMAgnitudeSpectrum, 0, 1, NORM_MINMAX);
-}
+	}
 
 void BandReject_Noise_Filter::ComputePSD(const cv::Mat& matSpatial, cv::Mat& matPSDImage,
 	cv::Mat& matMagSpectrum, cv::Mat& matLogPSD, cv::Mat& matLogMagSpectrum, int nLogFlag)

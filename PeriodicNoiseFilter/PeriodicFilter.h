@@ -19,6 +19,7 @@ public:
 	bool LoadImageData(void* pImageData, const int& nHeight, const int& nWidth);
 	bool Filter_Periodic_Noise();
 private:
+	void ApplyFilter();
 	inline bool PeakDetect(const double& d1, const double& d2, const double& d3) 
 	{return ((d2 > d1) && (d2 > d3));}
 	void ApplyLPF(const cv::Mat& matLPF, cv::Mat& matSpectrum);
@@ -37,5 +38,7 @@ private:
 	cv::Mat m_matPSD;
 	cv::Mat m_matLogMAgnitudeSpectrum;
 	cv::Mat m_matLogPSD;
+	cv::Mat m_matLPF;
+	cv::Mat matOutput;
 };
 #endif
