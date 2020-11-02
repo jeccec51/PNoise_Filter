@@ -1,0 +1,13 @@
+a.txt
+opencv_calib3d430d.lib
+opencv_core430d.lib
+opencv_features2d430d.lib
+opencv_flann430d.lib
+opencv_highgui430d.lib
+opencv_imgcodecs430d.lib
+opencv_imgproc430d.lib
+opencv_stitching430d.lib
+opencv_video430d.lib
+opencv_videoio430d.lib
+opencv_videostab430d.lib
+opencv_xfeatures2d430d.lib
