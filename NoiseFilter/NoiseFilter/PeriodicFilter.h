@@ -39,6 +39,6 @@ private:
 	cv::Mat m_matLogMAgnitudeSpectrum;
 	cv::Mat m_matLogPSD;
 	cv::Mat m_matLPF;
-	cv::Mat matOutput;
+	cv::Mat m_matOutput;
 };
 #endif
