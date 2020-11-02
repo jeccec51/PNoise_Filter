@@ -68,6 +68,13 @@ bool BandReject_Noise_Filter::Filter_Periodic_Noise()
 	return bFilterError;
 }
 
+cv::Mat BandReject_Noise_Filter::GetOutPutImage()
+{
+	cv::Mat matOp;
+	m_matOutput.convertTo(matOp, CV_8UC1);
+	return matOp;
+}
+
 void BandReject_Noise_Filter::ApplyFilter()
 {
 	m_matLPF = FFtShift(m_matLPF);

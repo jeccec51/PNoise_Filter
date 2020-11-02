@@ -18,6 +18,7 @@ public:
 	~BandReject_Noise_Filter();
 	bool LoadImageData(void* pImageData, const int& nHeight, const int& nWidth);
 	bool Filter_Periodic_Noise();
+	cv::Mat GetOutPutImage();
 private:
 	void ApplyFilter();
 	inline bool PeakDetect(const double& d1, const double& d2, const double& d3) 
