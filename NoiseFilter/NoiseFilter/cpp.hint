@@ -1,0 +1,5 @@
+#define NOISEFILTER_API __declspec(dllexport)
+#define NOISEFILTER_API __declspec(dllimport)
+#define NFILTER_DLL __declspec( dllexport )
+#define NFILTER_DLL __declspec( dllimport )
+#define NFILTER_DLL
